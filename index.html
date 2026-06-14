@@ -121,6 +121,19 @@
   }
   .proj.active .dot{ background:var(--green); }
 
+  /* Menú desplegable de proyectos (solo en móvil/pantalla chica) */
+  .proj-select{
+    display:none;
+    width:100%;
+    padding:11px 13px;
+    border:1.5px solid var(--amber);
+    border-radius:9px;
+    background:#fff;
+    color:var(--amber);
+    font-family:"Share Tech Mono", monospace;
+    font-size:13px; letter-spacing:1px; text-transform:uppercase;
+  }
+
   /* Área principal: fondo de cuaderno de sketch (puntos azules) */
   main{
     overflow-y:auto;
@@ -256,6 +269,11 @@
       border-right:none;
       border-bottom:1px solid var(--line);
     }
+    /* En móvil: oculta los botones y la cuadrícula uniforme se mantiene; usa el dropdown */
+    .sidebar .panel-title,
+    .sidebar .divider,
+    .sidebar .proj{ display:none; }
+    .proj-select{ display:block; }
   }
 </style>
 </head>
@@ -393,6 +411,17 @@ function render(){
   CONFIG.proyectos.forEach((p, i)=>{
     sidebarBtn(p.nombre, view === i, ()=>{ if (view !== i){ view = i; render(); } });
   });
+
+  // Menú desplegable equivalente (se muestra solo en móvil)
+  const sel = document.createElement("select");
+  sel.className = "proj-select";
+  sel.innerHTML = `<option value="home"${view === "home" ? " selected" : ""}>Inicio</option>` +
+    CONFIG.proyectos.map((p, i)=>`<option value="${i}"${view === i ? " selected" : ""}>${p.nombre}</option>`).join("");
+  sel.addEventListener("change", ()=>{
+    const v = sel.value === "home" ? "home" : parseInt(sel.value, 10);
+    if (v !== view){ view = v; render(); }
+  });
+  sb.appendChild(sel);
 
   // Galería de la vista actual
   gal.innerHTML = "";
