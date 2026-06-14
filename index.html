@@ -348,8 +348,23 @@ const CONFIG = {
 /* ====================  motor (no es necesario editar)  ==================== */
 const $ = (s)=>document.querySelector(s);
 const gal = $("#gallery"), sb = $("#sidebar");
-let activeProject = 0;
-const proj = ()=> CONFIG.proyectos[activeProject];
+let view = "home";   // "home" (página de inicio) o índice de proyecto
+
+// Cuántas tarjetas de cada proyecto se muestran en Inicio
+const HOME_POR_PROYECTO = 2;
+
+// Tarjetas a mostrar según la vista actual
+function currentCards(){
+  if (view === "home"){
+    const sel = [];
+    CONFIG.proyectos.forEach(p=>{
+      p.tarjetas.slice(0, HOME_POR_PROYECTO).forEach(c=> sel.push({ ...c, _img:p.imgCompleta }));
+    });
+    return sel;
+  }
+  const p = CONFIG.proyectos[view];
+  return p.tarjetas.map(c=> ({ ...c, _img:p.imgCompleta }));
+}
 
 function mediaHTML(m, titulo, forceContain){
   if (!m) return "";
@@ -361,23 +376,27 @@ function mediaHTML(m, titulo, forceContain){
   return "";
 }
 
+function sidebarBtn(label, isActive, onClick){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "proj" + (isActive ? " active" : "");
+  b.innerHTML = `<span class="dot"></span><span class="proj-text">${label}</span>`;
+  b.addEventListener("click", onClick);
+  sb.appendChild(b);
+}
+
 function render(){
   $("#titulo").textContent = CONFIG.titulo;
 
-  // Panel de proyectos
+  // Panel de proyectos (la vista de Inicio es la predeterminada, sin botón propio)
   sb.innerHTML = `<span class="panel-title">${CONFIG.panel}</span><div class="divider"></div>`;
   CONFIG.proyectos.forEach((p, i)=>{
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "proj" + (i === activeProject ? " active" : "");
-    b.innerHTML = `<span class="dot"></span><span class="proj-text">${p.nombre}</span>`;
-    b.addEventListener("click", ()=>{ if (i !== activeProject){ activeProject = i; render(); } });
-    sb.appendChild(b);
+    sidebarBtn(p.nombre, view === i, ()=>{ if (view !== i){ view = i; render(); } });
   });
 
-  // Galería del proyecto activo
+  // Galería de la vista actual
   gal.innerHTML = "";
-  proj().tarjetas.forEach(c=>{
+  currentCards().forEach(c=>{
     const art = document.createElement("article");
     art.className = "card";
     art.innerHTML = `
@@ -385,7 +404,7 @@ function render(){
         <div class="card-title">${c.titulo}</div>
         <div class="card-meta"><span class="dot"></span><span class="meta-text">${c.meta}</span></div>
       </div>
-      <div class="card-body">${mediaHTML(c.media, c.titulo, proj().imgCompleta)}</div>`;
+      <div class="card-body">${mediaHTML(c.media, c.titulo, c._img)}</div>`;
     art.addEventListener("click", ()=> openViewer(c));
     gal.appendChild(art);
   });
@@ -446,6 +465,12 @@ function closeViewer(){
 $("#viewerClose").addEventListener("click", closeViewer);
 viewer.addEventListener("click", (e)=>{ if (e.target === viewer) closeViewer(); });
 document.addEventListener("keydown", (e)=>{ if (e.key === "Escape") closeViewer(); });
+
+// El nombre del encabezado vuelve a la vista de Inicio
+const tit = $("#titulo");
+tit.style.cursor = "pointer";
+tit.title = "Inicio";
+tit.addEventListener("click", ()=>{ if (view !== "home"){ view = "home"; render(); } });
 
 render();
 </script>
